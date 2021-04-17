@@ -1,1 +1,1 @@
- while true; do echo -e '\nHTTP/1.1 200 OK\r\n' | nc -l 80; done
+while true; do cat index.html | nc -l -p 80; done
