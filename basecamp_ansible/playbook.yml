@@ -1,0 +1,8 @@
+---
+- name: myplaybook
+  become: yes
+  hosts: all
+  
+  roles:
+    - role: './roles/create_file_role'
+    - role: './roles/linux_distro_role'  

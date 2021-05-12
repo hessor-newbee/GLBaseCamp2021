@@ -1,0 +1,10 @@
+[group1]
+18.216.184.139
+[group2]
+3.140.192.83
+[group3]
+3.143.172.34
+
+[iaas:children]
+group1
+group2

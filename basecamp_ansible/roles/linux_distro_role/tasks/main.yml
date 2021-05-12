@@ -1,0 +1,9 @@
+---
+# tasks file for linux_distro_role
+- name: Find out os version
+  shell: grep PRETTY_NAME /etc/os-release
+  register: linux_version
+- name: Show os version
+  debug:
+    msg: "{{ linux_version.stdout }}"
+

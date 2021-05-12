@@ -1,0 +1,8 @@
+---
+# tasks file for create_file_role
+- name: Create file
+  file:
+    path: "/etc/iaac"
+    state: touch
+    mode: 0500
+  
