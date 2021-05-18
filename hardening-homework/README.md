@@ -62,15 +62,15 @@
 ```
 ## 2. Check /etc/hosts.allow and /etc/hosts.deny before running playbook.
 ![alt text](./img/2.png)
-## 3. Try to log in via ssh from another VM #1 to VM #2.
+## 3. Try to log in via ssh from VM #2 to VM #1.
 ![alt text](./img/9.png)
 ## 3. Run tcp-wrapper.yml.
 ![alt text](./img/6.png)
 ## 4. Check /etc/hosts.allow and deny.
 ![alt text](./img/7.png)
 ## 5. Testing:
-   - logged in to VM #1;
-   - tried to log in to VM #2.
+   - logged in to VM #2;
+   - tried to log in to VM #1.
 ![alt text](./img/8.png)
 
 
