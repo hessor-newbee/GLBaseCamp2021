@@ -1,0 +1,9 @@
+---
+- name: MyPlayBook
+  hosts: all
+  become: true
+  gather_facts: true 
+ 
+  roles:
+    - role: './roles/create_file_role'
+    - role: './roles/linux_distro_role'  

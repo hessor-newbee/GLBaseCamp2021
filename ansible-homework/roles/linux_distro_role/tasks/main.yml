@@ -1,0 +1,6 @@
+---
+# tasks file for linux_distro_role
+- name: Print OS version
+  debug:
+    msg: "{{ ansible_distribution }} - {{ ansible_distribution_version }}" 
+
