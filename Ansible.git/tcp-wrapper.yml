@@ -10,6 +10,10 @@
         path: /etc/hosts.allow
         block: |
           sshd: 178.94.125.98, LOCAL
+      register: result
+
+    - debug:
+        msg: "{{ result }}"
 
     - name: Configure /etc/hosts.deny
       blockinfile:
@@ -17,4 +21,8 @@
         block: |
           sshd: ALL
           ALL : ALL
+      register: result
+
+    - debug:
+        msg: "{{ result }}"
 

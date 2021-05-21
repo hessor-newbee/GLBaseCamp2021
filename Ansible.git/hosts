@@ -1,6 +1,13 @@
 [host1]
-52.15.141.167
+3.17.150.5
 [host2]
-3.138.198.97
+13.59.78.18
 [host3]
-3.135.226.150
+3.142.211.93
+
+[RedHat:children]
+host1
+host2
+
+[Debian:children]
+host3
