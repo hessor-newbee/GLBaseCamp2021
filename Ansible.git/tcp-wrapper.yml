@@ -1,8 +1,0 @@
----
-- name: Allow SSH access only from ansible host and localhost
-  hosts: all
-  become: true
-  gather_facts: true
-
-  tasks:
-
