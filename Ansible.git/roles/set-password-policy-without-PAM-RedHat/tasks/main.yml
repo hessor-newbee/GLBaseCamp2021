@@ -1,0 +1,17 @@
+---
+- block:
+  - name: "*RedHat* Disable username in password and enforce it for root" 
+    lineinfile:
+      path: /etc/pam.d/system-auth
+      regexp: '^password   requisite'
+      line: 'password   requisite pam_pwquality.so try_first_pass 
+             local_users_only retry=3 minlen=10 dcredit=3 
+             ucredit=2 gecoscheck=1 authtok_type= enforce_for_root'
+      firstmatch: true
+    register: result
+
+  - debug:
+      msg: "{{ result }}"
+
+  when: ansible_os_family == 'RedHat'
+
