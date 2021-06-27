@@ -39,20 +39,20 @@ resource "azurerm_public_ip" "publicipforlb" {
 }
 
 resource "azurerm_network_security_group" "lb-vmnet-nsg" {
-    name                = "LB-Vmnet-NSG"
-    location            = "West Europe"
-    resource_group_name = azurerm_resource_group.lb-rg.name
-    security_rule {
-        name                       = "http"
-        priority                   = 1001
-        direction                  = "Inbound"
-        access                     = "Allow"
-        protocol                   = "tcp"
-        source_port_range          = "*"
-        destination_port_range     = "80"
-        source_address_prefix      = "*"
-        destination_address_prefix = "*"
-    }
+  name                = "LB-Vmnet-NSG"
+  location            = "West Europe"
+  resource_group_name = azurerm_resource_group.lb-rg.name
+  security_rule {
+    name                       = "http"
+    priority                   = 1001
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "tcp"
+    source_port_range          = "*"
+    destination_port_range     = "80"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
 }
 
 resource "azurerm_lb" "lb" {
@@ -79,7 +79,7 @@ resource "azurerm_lb_probe" "lb-health-probe" {
   request_path        = "/"
   protocol            = "http"
   interval_in_seconds = 5
-  number_of_probes     = 2
+  number_of_probes    = 2
 }
 
 resource "azurerm_lb_rule" "lb-rule" {
@@ -119,81 +119,72 @@ resource "azurerm_network_interface" "vm2-nic" {
 }
 
 resource "azurerm_network_interface_security_group_association" "sec-grp-assoc-1" {
-    network_interface_id      = azurerm_network_interface.vm1-nic.id
-    network_security_group_id = azurerm_network_security_group.lb-vmnet-nsg.id
+  network_interface_id      = azurerm_network_interface.vm1-nic.id
+  network_security_group_id = azurerm_network_security_group.lb-vmnet-nsg.id
 }
 
 resource "azurerm_network_interface_security_group_association" "sec-grp-assoc-2" {
-    network_interface_id      = azurerm_network_interface.vm2-nic.id
-    network_security_group_id = azurerm_network_security_group.lb-vmnet-nsg.id
+  network_interface_id      = azurerm_network_interface.vm2-nic.id
+  network_security_group_id = azurerm_network_security_group.lb-vmnet-nsg.id
 }
 
-resource "azurerm_virtual_machine" "vm1" {
-  name                             = "VM1"
-  location                         = azurerm_resource_group.lb-rg.location
-  resource_group_name              = azurerm_resource_group.lb-rg.name
-  network_interface_ids            = [azurerm_network_interface.vm1-nic.id]
-  vm_size                          = "Standard_DS1_v2"
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
-  zones                             = ["1"]
-  
-  storage_image_reference {
+resource "azurerm_linux_virtual_machine" "vm1" {
+  name                  = "VM1"
+  location              = azurerm_resource_group.lb-rg.location
+  resource_group_name   = azurerm_resource_group.lb-rg.name
+  network_interface_ids = [azurerm_network_interface.vm1-nic.id]
+  size                  = "Standard_DS1_v2"
+  zone                  = 1
+  admin_username        = "adminuser"
+  custom_data           = file("deploy-site-httpd-1-bs64.sh")
+
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
   }
-  storage_os_disk {
-    name              = "myosdisk1"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-  os_profile {
-    computer_name  = "hostname"
-    admin_username = "testadmin"
-    admin_password = "Password1234!"
-    custom_data    = file("deploy-site-httpd-1.sh")
- }
-  os_profile_linux_config {
 
-    disable_password_authentication = false
+  os_disk {
+    name                 = "myosdisk1"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
 }
 
-resource "azurerm_virtual_machine" "vm2" {
-  name                             = "VM2"
-  location                         = azurerm_resource_group.lb-rg.location
-  resource_group_name              = azurerm_resource_group.lb-rg.name
-  network_interface_ids            = [azurerm_network_interface.vm2-nic.id]
-  vm_size                          = "Standard_DS1_v2"
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
-  zones                             = ["2"]
+resource "azurerm_linux_virtual_machine" "vm2" {
+  name                  = "VM2"
+  location              = azurerm_resource_group.lb-rg.location
+  resource_group_name   = azurerm_resource_group.lb-rg.name
+  network_interface_ids = [azurerm_network_interface.vm2-nic.id]
+  size                  = "Standard_DS1_v2"
+  zone                  = 2
+  admin_username        = "adminuser"
+  custom_data           = file("deploy-site-httpd-2-bs64.sh")
 
-  storage_image_reference {
+  admin_ssh_key {
+    username   = "adminuser"
+    public_key = file("~/.ssh/id_rsa.pub")
+  }
+
+  source_image_reference {
     publisher = "Canonical"
     offer     = "UbuntuServer"
     sku       = "16.04-LTS"
     version   = "latest"
   }
-  storage_os_disk {
-    name              = "myosdisk2"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
-  os_profile {
-    computer_name  = "hostname"
-    admin_username = "testadmin"
-    admin_password = "Password1234!"
-    custom_data    = file("deploy-site-httpd-2.sh")
- }
-  os_profile_linux_config {
 
-    disable_password_authentication = false
+  os_disk {
+    name                 = "myosdisk2"
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
   }
+
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "back-pool-assoc-1" {

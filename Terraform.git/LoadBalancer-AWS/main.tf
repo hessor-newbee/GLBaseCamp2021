@@ -12,15 +12,26 @@ provider "aws" {
   region  = var.region
 }
 
+resource "aws_instance" "base" {
+  ami                    = "ami-0d8d212151031f51c"
+  instance_type          = "t2.micro"
+  count                  = 2
+  vpc_security_group_ids = [aws_security_group.http-sg.id]
+  user_data              = file("apache.sh")
+  tags = {
+    Name = "ALB-instance"
+  }
+}
+
 resource "aws_security_group" "http-sg" {
-  name = "HTTP"
+  name   = "HTTP"
+  vpc_id = aws_default_vpc.default.id
   ingress {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -29,49 +40,58 @@ resource "aws_security_group" "http-sg" {
   }
 }
 
-resource "aws_instance" "elb_instance1" {
-  ami                    = "ami-0d8d212151031f51c"
-  instance_type          = "t2.micro"
-  availability_zone      = "us-east-2a"
-  vpc_security_group_ids = [aws_security_group.http-sg.id]
-  user_data              = file("deploy-site-httpd-1.sh")
-
+resource "aws_default_vpc" "default" {
   tags = {
-    Name = "ELB-Web server-1"
+    Name = "Default VPC"
   }
 }
 
-resource "aws_instance" "elb_instance2" {
-  ami                    = "ami-0d8d212151031f51c"
-  instance_type          = "t2.micro"
-  availability_zone      = "us-east-2b"
-  vpc_security_group_ids = [aws_security_group.http-sg.id]
-  user_data              = file("deploy-site-httpd-2.sh")
+data "aws_subnet_ids" "subnet" {
+  vpc_id = aws_default_vpc.default.id
+}
 
+resource "aws_alb_target_group" "alb-target-group" {
+  health_check {
+    interval            = 10
+    path                = "/"
+    protocol            = "HTTP"
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 2
+  }
+  name        = "alb-target-group"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "instance"
+  vpc_id      = aws_default_vpc.default.id
+}
+
+resource "aws_lb" "alb" {
+  name            = "ALB"
+  security_groups = ["${aws_security_group.http-sg.id}"]
+  internal        = false
   tags = {
-    Name = "ELB-Web server-2"
+    Name = "ALB"
+  }
+  subnets            = data.aws_subnet_ids.subnet.ids
+  ip_address_type    = "ipv4"
+  load_balancer_type = "application"
+}
+
+resource "aws_alb_listener" "alb_listener" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = aws_alb_target_group.alb-target-group.arn
+    type             = "forward"
   }
 }
 
-resource "aws_elb" "elb_webservers" {
-  name               = "ELB-WebServers"
-  availability_zones = ["us-east-2a", "us-east-2b"]
-
-  listener {
-    instance_port     = 80
-    instance_protocol = "http"
-    lb_port           = 80
-    lb_protocol       = "http"
-  }
-
-  instances                   = [aws_instance.elb_instance1.id, aws_instance.elb_instance2.id]
-  cross_zone_load_balancing   = true
-  idle_timeout                = 400
-  connection_draining         = true
-  connection_draining_timeout = 400
-
-  tags = {
-    Name = "ELB-WebServers"
-  }
+resource "aws_alb_target_group_attachment" "ec2_attach" {
+  count            = length(aws_instance.base)
+  target_group_arn = aws_alb_target_group.alb-target-group.arn
+  target_id        = aws_instance.base[count.index].id
 }
 
