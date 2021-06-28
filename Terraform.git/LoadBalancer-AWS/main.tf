@@ -100,6 +100,11 @@ resource "aws_instance" "vm1" {
     network_interface_id = aws_network_interface.vm1-nic.id
     device_index         = 0
   }
+
+  tags = {
+    Name = "VM-1"
+  }
+
 }
 
 resource "aws_instance" "vm2" {
@@ -111,6 +116,10 @@ resource "aws_instance" "vm2" {
   network_interface {
     network_interface_id = aws_network_interface.vm2-nic.id
     device_index         = 0
+  }
+  
+  tags = {
+    Name = "VM-2"
   }
 }
 
@@ -130,8 +139,9 @@ resource "aws_alb_target_group" "nlb-target-group" {
 }
 
 resource "aws_lb" "nlb" {
-  name            = "NLB"
-  internal        = false
+  name                             = "NLB"
+  internal                         = false
+  enable_cross_zone_load_balancing = true
   tags = {
     Name = "NLB"
   }
